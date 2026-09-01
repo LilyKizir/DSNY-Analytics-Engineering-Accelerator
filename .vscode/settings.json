@@ -2,6 +2,5 @@
   "dbt.projectDirs": [
     "transformer"
   ],
-  "dbt.dbtPythonPath": "/usr/local/bin/python3",
   "dbt.dbtPythonPathOverride": "/usr/local/bin/python3"
 }
