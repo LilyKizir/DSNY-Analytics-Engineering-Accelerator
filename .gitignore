@@ -22,3 +22,6 @@ Thumbs.db
 
 # Developer tools & containers
 .devcontainer/devcontainer.json.user
+
+# EXCEPT for the dbt workspace settings
+!.vscode/settings.json
