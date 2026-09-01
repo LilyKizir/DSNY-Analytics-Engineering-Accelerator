@@ -5,3 +5,7 @@ logs/
 
 # Local packages if using dbt package manager
 packages/
+
+# Ignore local user metrics
+.user.yml
+user.yml
