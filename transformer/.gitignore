@@ -1,5 +1,7 @@
-
+# dbt compiled code and logs
 target/
 dbt_packages/
 logs/
-.env
+
+# Local packages if using dbt package manager
+packages/

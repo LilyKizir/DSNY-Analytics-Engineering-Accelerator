@@ -1,2 +1,24 @@
-
+# Codespaces
 logs/
+
+# Python artifacts
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.venv/
+dbt-env/
+env/
+venv/
+
+# Secrets & Environment files
+.env
+*.pem
+
+# Local dbt user files & OS artifacts
+user.yml
+.DS_Store
+Thumbs.db
+
+# Developer tools & containers
+.devcontainer/devcontainer.json.user

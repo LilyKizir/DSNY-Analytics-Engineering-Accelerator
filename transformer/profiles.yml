@@ -1,4 +1,5 @@
 transformer:
+  target: dev
   outputs:
     dev:
       type: snowflake
@@ -10,4 +11,3 @@ transformer:
       warehouse: "{{ env_var('') }}"
       schema: "{{ env_var('') }}"
       threads: 4
-    target: dev
