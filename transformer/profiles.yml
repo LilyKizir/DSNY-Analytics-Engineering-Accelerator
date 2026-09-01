@@ -3,11 +3,11 @@ transformer:
   outputs:
     dev:
       type: snowflake
-      account: "{{ env_var('') }}"
-      user: "{{ env_var('') }}"
-      password: "{{ env_var('') }}"
-      role: "{{ env_var('') }}"
-      database: "{{ env_var('') }}"
-      warehouse: "{{ env_var('') }}"
-      schema: "{{ env_var('') }}"
+      account: "{{ env_var('SNOWFLAKE_ACCOUNT') }}"
+      user: "{{ env_var('SNOWFLAKE_USERNAME') }}"
+      private_key: "{{ env_var('SNOWFLAKE_PRIVATE_KEY') }}"
+      role: "ACCOUNTADMIN"
+      database: "TIL_DATA_ENGINEERING"
+      warehouse: "DATASCHOOL_WH"
+      schema: "AEA_LK_RAW"
       threads: 4
