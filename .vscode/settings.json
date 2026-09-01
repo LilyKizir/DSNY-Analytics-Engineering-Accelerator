@@ -2,6 +2,5 @@
   "dbt.projectDirs": [
     "transformer"
   ],
-  "dbt.dbtPythonPath": "${workspaceFolder}/.venv/bin/python",
-  "dbt.executablePathModifier": "dbt"
+  "dbt.dbtPythonPath": "/usr/local/bin/python3"
 }
