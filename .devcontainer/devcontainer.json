@@ -14,10 +14,15 @@
         		"innoverio.vscode-dbt-power-user",
         		"redhat.vscode-yaml",
         		"Snowflake.snowflake-vsc"
-      		]
-    	}
+      		],
+			"settings": {
+        		"python.defaultInterpreterPath": "/usr/local/bin/python3",
+        		"dbt.dbtPythonPathOverride": "/usr/local/bin/python3",
+        		"dbt.projectDirs": ["transformer"]
+    		}
+		}
   	},
-	"postCreateCommand": "pip install --upgrade pip && pip install dbt-snowflake python-dotenv requests"
+	"updateContentCommand": "pip install --upgrade pip && pip install dbt-snowflake python-dotenv requests"
 
 	// Features to add to the dev container. More info: https://containers.dev/features.
 	// "features": {},
