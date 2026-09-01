@@ -12,6 +12,19 @@ Email: lily.kiziriya@theinformationlab.com
 
 This is the project overview
 
+```Plaintext
+your-repo-name/
+├── .devcontainer/
+│   └── devcontainer.json      <-- Codespaces installation requirements
+├── .vscode/
+│   └── settings.json
+└── dbt_project/               <-- This is the dbt project
+    ├── models/
+    ├── macros/
+    ├── dbt_project.yml
+    └── profiles.yml           <-- Connection details for your data warehouse
+```
+
 <h2>Key steps</h2>
 
 <details>
