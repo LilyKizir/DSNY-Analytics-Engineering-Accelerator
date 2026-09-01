@@ -1,0 +1,13 @@
+transformer:
+  outputs:
+    dev:
+      type: snowflake
+      account: "{{ env_var('') }}"
+      user: "{{ env_var('') }}"
+      password: "{{ env_var('') }}"
+      role: "{{ env_var('') }}"
+      database: "{{ env_var('') }}"
+      warehouse: "{{ env_var('') }}"
+      schema: "{{ env_var('') }}"
+      threads: 4
+    target: dev
