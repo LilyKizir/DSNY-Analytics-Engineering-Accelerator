@@ -56,9 +56,9 @@ enter code here
 ```
 </details>
 
-<h2>Want to run this yourself?</h2>
+<h2>Project Setup</h2>
 
-Great! You can simply follow these steps:
+Configuration considerations:
 
 <h3>1. Clone the repository</h3>
 
