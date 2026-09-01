@@ -4,6 +4,9 @@
 	"name": "dbt Snowflake Environment",
 	"image": "mcr.microsoft.com/devcontainers/python:3.12",
 	"workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
+	"remoteEnv": {
+        "DBT_PROFILES_DIR": "${containerWorkspaceFolder}/transformer"
+    },
 	"customizations": {
     	"vscode": {
       		"extensions": [
