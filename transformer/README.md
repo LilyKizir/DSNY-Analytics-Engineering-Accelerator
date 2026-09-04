@@ -1,47 +1,22 @@
-Welcome to your new dbt project!
-
-### Using the starter project
-
-Try running the following commands:
-- dbt run
-- dbt test
-
-
-### Resources:
-- Learn more about dbt [in the docs](https://docs.getdbt.com/docs/introduction)
-- Check out [Discourse](https://discourse.getdbt.com/) for commonly asked questions and answers
-- Join the [chat](https://community.getdbt.com/) on Slack for live discussions and support
-- Find [dbt events](https://events.getdbt.com) near you
-- Check out [the blog](https://blog.getdbt.com/) for the latest news on dbt's development and best practices
-
-<h1>DSNY Analytics Engineering Accelerator</h1>
+<h1>Tranformer</h1>
 <a id="readme-top"></a>
 
-Produced by Lily Kiziriya
+This folder contains a dbt project that pulls raw data from snowflake and transforms it, through a series of models, into BI ready tables.
 
-<h2>Contact</h2>
-
-[GitHub]() | [LinkedIn]() | [Twitter]() | [Alteryx Community]()  
-Email: lily.kiziriya@theinformationlab.com
-
-<h2>Overview</h2>
-
-This is the project overview
+<h2>Directory Map</h2>
 
 ```Plaintext
 DSNY-Analytics-Engineering-Accelerator/
-├── .devcontainer/
-│   └── devcontainer.json      <-- Codespaces environment installation requirements
-├── .github/
-│   └── workflows              <-- This contains the Github actions YAML
-├── .vscode/                   <-- This contains vscode settings for codespaces
-│   └── settings.json
-├── extract-loader/            <-- This contains the python ingestion scripts
-└── transformer/               <-- This is the dbt project
+├── [everything else]
+└── transformer/               <-- YOU ARE HERE
     ├── models/
+    │   └── stage/             <-- Bronze Layer: pull raw data, convert to tables, clean data types
+    │   ├── intermediate/      <-- Silver Layer: reshape and aggregate here. Finalize data into fact and dim tables (star schema)
+    │   └── mart/              <-- Gold Layer: join fact/dim tables to create a single BI Analysis ready product that is focus specific
     ├── macros/
-    ├── dbt_project.yml        <-- Top-level project configuration
-    └── profiles.yml           <-- Connection details for your data warehouse
+    ├── tests/
+    ├── dbt_project.yml
+    └── profiles.yml          
 ```
 
 <h2>Key steps</h2>
