@@ -13,7 +13,7 @@ Email: lily.kiziriya@theinformationlab.com
 This is the project overview
 
 ```Plaintext
-your-repo-name/
+DSNY-Analytics-Engineering-Accelerator/
 ├── .devcontainer/
 │   └── devcontainer.json      <-- Codespaces environment installation requirements
 ├── .github/
