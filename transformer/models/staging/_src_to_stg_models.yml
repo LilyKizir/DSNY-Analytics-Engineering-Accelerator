@@ -1,0 +1,19 @@
+version: 2
+sources:
+    #custom schema path alias for Jinja
+  - name: eia_energy
+    database: TIL_DATA_ENGINEERING
+    schema: AEA_LK_RAW
+    tables:
+    # table name must match as in snowflake
+      - name: raw_region_operating_metrics # name of table in dbt flowchart comes from [the_file_name].sql
+        identifier: raw_region_operating_metrics
+
+      - name: raw_generation_fuel_source # name of table in dbt flowchart comes from [the_file_name].sql
+        identifier: raw_generation_fuel_source
+
+      - name: raw_subregion_demand # name of table in dbt flowchart comes from [the_file_name].sql
+        identifier: raw_subregion_demand
+
+      - name: raw_balancing_authority_interchange # name of table in dbt flowchart comes from [the_file_name].sql
+        identifier: raw_balancing_authority_interchange

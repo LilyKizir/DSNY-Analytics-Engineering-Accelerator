@@ -1,5 +1,5 @@
 with source as (
-        select * from {{ source('eia', 'electricity_operations') }}
+        select * from {{ source('eia_energy', 'raw_region_operating_metrics') }}
   ),
   renamed as (
     select
