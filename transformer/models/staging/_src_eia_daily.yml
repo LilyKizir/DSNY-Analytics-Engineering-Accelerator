@@ -1,7 +1,10 @@
 version: 2
 sources:
-  - name: eia_daily_raw
+    #custom schema path alias for Jinja
+  - name: eia
     database: TIL_DATA_ENGINEERING
     schema: AEA_LK_RAW
     tables:
-      - name: EIA_DAILY_REGION_DATA_RAW
+    # table name must match as in snowflake
+      - name: electricity_operations
+        identifier: raw_electricity_operations

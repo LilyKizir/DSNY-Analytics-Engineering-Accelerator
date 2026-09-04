@@ -9,5 +9,5 @@ transformer:
       role: "ACCOUNTADMIN"
       database: "TIL_DATA_ENGINEERING"
       warehouse: "DATASCHOOL_WH"
-      schema: "AEA_LK_RAW"
+      schema: "AEA_LK"
       threads: 4
