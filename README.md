@@ -13,7 +13,7 @@ Email: lily.kiziriya@theinformationlab.com
 This is the project overview
 
 ```Plaintext
-DSNY-Analytics-Engineering-Accelerator/
+DSNY-Analytics-Engineering-Accelerator/    <-- YOU ARE HERE
 ├── .devcontainer/
 │   └── devcontainer.json      <-- Codespaces environment installation requirements
 ├── .github/
@@ -21,11 +21,7 @@ DSNY-Analytics-Engineering-Accelerator/
 ├── .vscode/                   <-- This contains vscode settings for codespaces
 │   └── settings.json
 ├── extract-loader/            <-- This contains the python ingestion scripts
-└── transformer/               <-- This is the dbt project
-    ├── models/
-    ├── macros/
-    ├── dbt_project.yml        <-- Top-level project configuration
-    └── profiles.yml           <-- Connection details for your data warehouse
+└── transformer/               <-- This contains the dbt project
 ```
 
 <h2>Key steps</h2>
