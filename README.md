@@ -15,13 +15,16 @@ This is the project overview
 ```Plaintext
 your-repo-name/
 ├── .devcontainer/
-│   └── devcontainer.json      <-- Codespaces installation requirements
-├── .vscode/
+│   └── devcontainer.json      <-- Codespaces environment installation requirements
+├── .github/
+│   └── workflows              <-- This contains the Github actions YAML
+├── .vscode/                   <-- This contains vscode settings for codespaces
 │   └── settings.json
-└── dbt_project/               <-- This is the dbt project
+├── extract-loader/            <-- This contains the python ingestion scripts
+└── transformer/               <-- This is the dbt project
     ├── models/
     ├── macros/
-    ├── dbt_project.yml
+    ├── dbt_project.yml        <-- Top-level project configuration
     └── profiles.yml           <-- Connection details for your data warehouse
 ```
 
