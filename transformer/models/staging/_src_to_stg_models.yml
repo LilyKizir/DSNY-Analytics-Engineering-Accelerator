@@ -9,8 +9,8 @@ sources:
       - name: raw_regional_operating_metrics # name of table in dbt flowchart comes from [the_file_name].sql
         identifier: raw_regional_operating_metrics
 
-      - name: raw_generation_fuel_source # name of table in dbt flowchart comes from [the_file_name].sql
-        identifier: raw_generation_fuel_source
+      - name: raw_generation_energy_source # name of table in dbt flowchart comes from [the_file_name].sql
+        identifier: raw_generation_energy_source
 
       - name: raw_subregional_demand # name of table in dbt flowchart comes from [the_file_name].sql
         identifier: raw_subregional_demand

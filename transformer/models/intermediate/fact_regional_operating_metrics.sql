@@ -1,8 +1,5 @@
 with stg_source as (
     select * from {{ ref('stg_regional_operating_metrics') }}
 )
-select
-    type_code
-    ,type_name
+select * exclude (ba_name, type_name, value_units)
 from stg_source
-group by all

@@ -6,7 +6,7 @@ from STG_EIA_DAILY;
 
 DROP SCHEMA IF EXISTS TIL_DATA_ENGINEERING.AEA_LK_AEA_LK_STAGE CASCADE;
 
-DROP VIEW IF EXISTS TIL_DATA_ENGINEERING.AEA_LK_STAGE.STG_EIA_DAILY;
+DROP VIEW IF EXISTS TIL_DATA_ENGINEERING.AEA_LK_STAGE.STG_REGION_OPERATING_METRICS;
 
 DROP TABLE IF EXISTS TIL_DATA_ENGINEERING.AEA_LK_RAW.RAW_GENERATION_FUEL_SOURCE;
 
@@ -81,3 +81,19 @@ select
     ,* exclude period
 from renames;
 
+select *
+from til_data_engineering.AEA_LK_STAGE.stg_generation_energy_source;
+
+select *
+from til_data_engineering.aea_lk_raw.raw_generation_energy_source;
+
+select *
+from til_data_engineering.aea_lk_intermediate.fact_regional_operating_metrics;
+select *
+from til_data_engineering.aea_lk_intermediate.fact_balancing_authority_interchange;
+select *
+from til_data_engineering.aea_lk_intermediate.fact_subregional_demand;
+select *
+from til_data_engineering.aea_lk_intermediate.fact_generation_energy_source;
+select *
+from til_data_engineering.aea_lk_intermediate.dim_type_codes;
