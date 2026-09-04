@@ -3,10 +3,7 @@
 
 Produced by Lily Kiziriya
 
-<h2>Contact</h2>
-
-[GitHub]() | [LinkedIn]() | [Twitter]() | [Alteryx Community]()  
-Email: lily.kiziriya@theinformationlab.com
+The Analytics Engineering Project is...
 
 <h2>Overview</h2>
 
@@ -17,7 +14,7 @@ DSNY-Analytics-Engineering-Accelerator/    <-- YOU ARE HERE
 ├── .devcontainer/
 │   └── devcontainer.json      <-- Codespaces environment installation requirements
 ├── .github/
-│   └── workflows              <-- This contains the Github actions YAML
+│   └── workflows/             <-- This contains the Github actions YAML
 ├── .vscode/                   <-- This contains vscode settings for codespaces
 │   └── settings.json
 ├── extract-loader/            <-- This contains the python ingestion scripts
@@ -112,3 +109,11 @@ python main.py
 ```
 
 This will run the script.
+
+<hr>
+
+<h2>Contact</h2>
+
+Lily Kiziriya  
+Email: lily.kiziriya@theinformationlab.com  
+[GitHub]() | [LinkedIn]() | [Twitter]() | [Alteryx Community]()  
