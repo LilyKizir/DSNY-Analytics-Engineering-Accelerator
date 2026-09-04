@@ -5,9 +5,7 @@ Produced by Lily Kiziriya
 
 The Analytics Engineering Project is...
 
-<h2>Overview</h2>
-
-This is the project overview
+<h2>Directory Map</h2>
 
 ```Plaintext
 DSNY-Analytics-Engineering-Accelerator/    <-- YOU ARE HERE
