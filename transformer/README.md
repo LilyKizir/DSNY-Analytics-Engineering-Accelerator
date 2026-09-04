@@ -10,9 +10,6 @@ DSNY-Analytics-Engineering-Accelerator/
 ├── [everything else]
 └── transformer/               <-- YOU ARE HERE
     ├── models/
-    │   └── stage/             <-- Bronze Layer: pull raw data, convert to tables, clean data types
-    │   ├── intermediate/      <-- Silver Layer: reshape and aggregate here. Finalize data into fact and dim tables (star schema)
-    │   └── mart/              <-- Gold Layer: join fact/dim tables to create a single BI Analysis ready product that is focus specific
     ├── macros/
     ├── tests/
     ├── dbt_project.yml
