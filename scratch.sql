@@ -6,7 +6,7 @@ from STG_EIA_DAILY;
 
 DROP SCHEMA IF EXISTS TIL_DATA_ENGINEERING.AEA_LK_AEA_LK_STAGE CASCADE;
 
-DROP VIEW IF EXISTS TIL_DATA_ENGINEERING.AEA_LK_RAW.MY_SECOND_DBT_MODEL;
+DROP VIEW IF EXISTS TIL_DATA_ENGINEERING.AEA_LK_STAGE.STG_EIA_DAILY;
 
 DROP TABLE IF EXISTS TIL_DATA_ENGINEERING.AEA_LK_RAW.MY_FIRST_DBT_MODEL;
 
@@ -20,7 +20,7 @@ from raw_electricity_operations
 limit 1;
 
 select
-    RAW_DATA:request.command::string as request_command
+    -- RAW_DATA:request.command::string as request_command
     , d.value:"period"::date as period
     , d.value:"respondent"::string as respondent_code
     , d.value:"respondent-name"::string as respondent_name
@@ -37,7 +37,7 @@ use database TIL_DATA_ENGINEERING;
 use schema AEA_LK_STAGE;
 
 select *
-from STG_EIA_DAILY;
+from stg_eia_electricity_operations;
 
 -- ROW TYPES
 select distinct
@@ -67,3 +67,17 @@ create table IF NOT EXISTS TIL_DATA_ENGINEERING.AEA_LK_RAW.RAW_ELECTRICITY_OPERA
     , RECORD_COUNT int
     , RAW_JSON_STR VARIANT
 );
+
+select *
+from stg_eia_electricity_operations;
+
+with renames as(
+    select *
+    from stg_eia_electricity_operations
+)
+select
+    to_date(period, 'YYYY-MM-DDTHH') as post_date
+    ,to_time(period, 'YYYY-MM-DDTHH') as post_time
+    ,* exclude period
+from renames;
+
