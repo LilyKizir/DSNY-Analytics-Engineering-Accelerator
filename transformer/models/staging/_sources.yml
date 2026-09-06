@@ -1,0 +1,88 @@
+version: 2
+sources:
+    #custom schema path alias for Jinja
+  - name: eia_energy
+    database: TIL_DATA_ENGINEERING
+    schema: AEA_LK_RAW
+    description: >
+      Raw ingestion layer for US Energy Information Administration (EIA) Open Data API. 
+      Timestamps are ingested in UTC.
+    tables:
+      - name: raw_regional_operating_metrics
+        description: >
+          Endpoint: https://api.eia.gov/v2/electricity/rto/region-data/data/
+          Grain: One row per API response, containing a raw JSON payload for EIA regional operating metrics
+          Contains operating metrics including total generation, demand, and forecasted demand.
+          Updated hourly.
+        tests: &eia_table_tests
+          - dbt_utils.unique_combination_of_columns:
+              combination_of_columns:
+                - utc_timestamp
+                - page
+        columns: &eia_el_columns
+          - name: run_id
+            description: "UUID generated during the Python script execution."
+            tests:
+              - not_null
+          - name: utc_response_timestamp
+            description: "The UTC timestamp of when the API request was executed."
+            tests:
+              - not_null
+          - name: status_code
+            description: "HTTP status code returned by the API (e.g., 200, 429)."
+            tests:
+              - not_null
+              - accepted_values:
+                  values: [200]
+                  config:
+                      severity: warn
+          - name: status_msg
+            description: "'OK' for successes, or the raw error message for failures."
+          - name: utc_timestamp
+            description: "The target operating hour the script requested (e.g., '2026-01-01T00')."
+            tests:
+              - not_null
+          - name: page
+            description: "The pagination page number for this request (calculated from offset)."
+            tests:
+              - not_null
+          - name: record_count
+            description: "Number of data records contained inside the JSON payload."
+            tests:
+              - not_null
+              - dbt_utils.accepted_range:
+                  min_value: 0
+                  max_value: 5000
+          - name: raw_json_str
+            description: >
+              Snowflake VARIANT column containing the full EIA JSON response. 
+              The actual data records are nested under `response.data`.
+            tests:
+              - not_null
+
+      - name: raw_generation_energy_source
+        description: >
+          Endpoint: https://api.eia.gov/v2/electricity/rto/fuel-type-data/data/
+          Grain: One row per API response, containing a raw JSON payload for EIA fuel type generation data.
+          Contains net electricity generation broken down by specific energy sources (e.g., Coal, Natural Gas, Nuclear, Wind).
+          Updated hourly.
+        tests: *eia_table_tests
+        columns: *eia_el_columns
+
+      - name: raw_subregional_demand
+        description: >
+          Endpoint: https://api.eia.gov/v2/electricity/rto/region-sub-ba-data/data/
+          Grain: One row per API response, containing a raw JSON payload for EIA sub-regional utility demand data.
+          Contains actual electricity demand for granular utility zones nested within larger Balancing Authorities.
+          Updated hourly.
+        tests: *eia_table_tests
+        columns: *eia_el_columns
+
+      - name: raw_balancing_authority_interchange
+        description: >
+          Endpoint: https://api.eia.gov/v2/electricity/rto/interchange-data/data/
+          Grain: One row per API response, containing a raw JSON payload for EIA grid interchange transfer data.
+          Contains the megawatt-hour volume of electricity physically transferred between interconnected Balancing Authorities.
+          Updated hourly.
+        tests: *eia_table_tests
+        columns: *eia_el_columns
