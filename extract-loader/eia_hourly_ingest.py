@@ -6,6 +6,7 @@ import time
 import uuid
 import snowflake.connector
 from datetime import datetime, timezone
+import hashlib
 
 # --- Core Configuration ---
 load_dotenv()
@@ -95,7 +96,7 @@ def extract_eia_endpoint(endpoint_config, target_hour):
         
         if status_code == 200:
             data = response.json()
-            raw_json_str = json.dumps(data)
+            raw_json_str = json.dumps(data, sort_keys=True, separators=(',', ':'))
             records = data.get("response", {}).get("data", [])
             record_count = len(records)
             
@@ -109,6 +110,9 @@ def extract_eia_endpoint(endpoint_config, target_hour):
             has_more_data = False 
             print(f"Failed at page {page_num}. Status: {status_code}. Error: {error_msg}")
 
+        payload_hash = hashlib.md5(raw_json_str.encode('utf-8')).hexdigest()
+        print(payload_hash)
+
         response_time_str = request_timestamp.strftime('%Y-%m-%d %H:%M:%S')
         status_message = error_msg if error_msg else "OK"
 
@@ -116,32 +120,39 @@ def extract_eia_endpoint(endpoint_config, target_hour):
             MERGE INTO {SF_DATABASE}.{SF_SCHEMA}.{target_table} T
             USING (
                 SELECT 
-                    %s AS run_id,
-                    %s AS utc_response_timestamp,
-                    %s AS status_code,
-                    %s AS status_msg,
-                    %s AS utc_timestamp,
-                    %s AS page,
-                    %s AS record_count,
-                    PARSE_JSON(%s) AS raw_json_str
+                    %s::VARCHAR AS run_id,
+                    %s::TIMESTAMP_NTZ AS utc_response_timestamp,
+                    %s::NUMBER AS status_code,
+                    %s::VARCHAR AS status_msg,
+                    %s::VARCHAR AS utc_timestamp, 
+                    %s::NUMBER AS page,
+                    %s::NUMBER AS record_count,
+                    PARSE_JSON(%s) AS raw_json_str,
+                    %s::VARCHAR AS payload_hash
             ) S
             ON T.utc_timestamp = S.utc_timestamp AND T.page = S.page
-            WHEN MATCHED THEN
+            
+            -- 2. Add the CDC check: only update if the hash changed
+            WHEN MATCHED AND (T.payload_hash IS NULL OR T.payload_hash != S.payload_hash) THEN
                 UPDATE SET 
                     T.run_id = S.run_id,
                     T.utc_response_timestamp = S.utc_response_timestamp,
                     T.status_code = S.status_code,
                     T.status_msg = S.status_msg,
                     T.record_count = S.record_count,
-                    T.raw_json_str = S.raw_json_str
+                    T.raw_json_str = S.raw_json_str,
+                    T.payload_hash = S.payload_hash
+                    
+            -- 3. Ensure hash is inserted for brand new records
             WHEN NOT MATCHED THEN
                 INSERT (run_id, utc_response_timestamp, status_code, status_msg, 
-                        utc_timestamp, page, record_count, raw_json_str)
+                        utc_timestamp, page, record_count, raw_json_str, payload_hash)
                 VALUES (S.run_id, S.utc_response_timestamp, S.status_code, S.status_msg, 
-                        S.utc_timestamp, S.page, S.record_count, S.raw_json_str);
+                        S.utc_timestamp, S.page, S.record_count, S.raw_json_str, S.payload_hash);
         """
         
         try:
+            # 4. Add payload_hash as the 9th parameter in the tuple
             cursor.execute(upsert_query, (
                   run_id
                 , response_time_str
@@ -151,6 +162,7 @@ def extract_eia_endpoint(endpoint_config, target_hour):
                 , page_num
                 , record_count
                 , raw_json_str
+                , payload_hash 
             ))
             print(f"Successfully loaded Page {page_num} to {target_table}. Records: {record_count}")
         except Exception as e:
