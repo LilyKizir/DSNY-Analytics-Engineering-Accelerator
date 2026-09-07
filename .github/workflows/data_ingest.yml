@@ -29,6 +29,7 @@ jobs:
           SNOWFLAKE_USERNAME: ${{ secrets.SNOWFLAKE_USERNAME }}
           SNOWFLAKE_PAT: ${{ secrets.SNOWFLAKE_PAT }}
           SNOWFLAKE_ACCOUNT: ${{ secrets.SNOWFLAKE_ACCOUNT }}
+          SNOWFLAKE_PRIVATE_KEY: ${{ secrets.SNOWFLAKE_PRIVATE_KEY }}
           # Explicit static configuration
           SNOWFLAKE_WAREHOUSE: "DATASCHOOL_WH"
           SNOWFLAKE_DATABASE: "TIL_DATA_ENGINEERING"
