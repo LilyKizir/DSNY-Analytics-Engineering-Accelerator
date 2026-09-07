@@ -4,8 +4,9 @@ import requests
 import json
 import time
 import uuid
+import argparse
 import snowflake.connector
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 import hashlib
 
 # --- Core Configuration ---
@@ -13,6 +14,11 @@ load_dotenv()
 EIA_API_KEY = os.getenv('EIA_API_KEY')
 LENGTH = 5000
 FREQUENCY = "hourly"
+
+# --- Rate Limiting Configuration ---
+# 0.45 seconds = ~2.22 req/sec (max 5) & ~8,000 req/hr (max 9,000)
+MIN_REQUEST_INTERVAL = 0.45  
+LAST_REQUEST_TIMESTAMP = 0.0
 
 # --- Snowflake Configuration ---
 SF_USER = os.getenv('SNOWFLAKE_USERNAME')
@@ -35,14 +41,23 @@ def get_snowflake_connection():
         schema=SF_SCHEMA
     )
 
+def enforce_rate_limit():
+    """Enforces minimum interval between API calls to honor rate caps."""
+    global LAST_REQUEST_TIMESTAMP
+    elapsed = time.time() - LAST_REQUEST_TIMESTAMP
+    if elapsed < MIN_REQUEST_INTERVAL:
+        time.sleep(MIN_REQUEST_INTERVAL - elapsed)
+    LAST_REQUEST_TIMESTAMP = time.time()
+
 def fetch_with_retries(url, params, max_retries=3):
-    """Fetches data from the API with exponential backoff for transient errors."""
+    """Fetches data from the API with rate limiting and exponential backoff."""
     for attempt in range(max_retries):
         try:
+            enforce_rate_limit()
             response = requests.get(url, params=params, timeout=30)
             if response.status_code in [429, 500, 502, 503, 504]:
-                wait_time = 2 ** attempt
-                print(f"Status {response.status_code}. Retrying in {wait_time}s...")
+                wait_time = (2 ** attempt) + 1
+                print(f"\nStatus {response.status_code}. Throttling and retrying in {wait_time}s...")
                 time.sleep(wait_time)
                 continue
             return response
@@ -141,87 +156,130 @@ def upsert_to_snowflake(cursor, target_table, record_data):
         record_data["payload_hash"]
     ))
 
+def calculate_target_hours(mode="auto", custom_start=None, custom_end=None):
+    """Generates UTC hourly targets (YYYY-MM-DDTHH) based on execution hierarchy."""
+    now_utc = datetime.now(timezone.utc)
+    today_date = now_utc.date()
+    
+    if mode == "auto":
+        if today_date.day == 1:
+            mode = "monthly"
+        elif today_date.weekday() == 0:  # Monday
+            mode = "weekly"
+        else:
+            mode = "daily"
+
+    print(f"--- Evaluated Mode: {mode.upper()} ---")
+
+    if mode == "daily":
+        yesterday = today_date - timedelta(days=1)
+        two_days_ago = today_date - timedelta(days=2)
+        start_dt = datetime(two_days_ago.year, two_days_ago.month, two_days_ago.day, 0, tzinfo=timezone.utc)
+        end_dt = datetime(yesterday.year, yesterday.month, yesterday.day, 23, tzinfo=timezone.utc)
+
+    elif mode == "weekly":
+        last_sunday = today_date - timedelta(days=1)
+        monday_two_weeks_ago = last_sunday - timedelta(days=13)
+        start_dt = datetime(monday_two_weeks_ago.year, monday_two_weeks_ago.month, monday_two_weeks_ago.day, 0, tzinfo=timezone.utc)
+        end_dt = datetime(last_sunday.year, last_sunday.month, last_sunday.day, 23, tzinfo=timezone.utc)
+
+    elif mode == "monthly":
+        first_of_this_month = today_date.replace(day=1)
+        last_day_prev_month = first_of_this_month - timedelta(days=1)
+        first_day_prev_month = last_day_prev_month.replace(day=1)
+        
+        last_day_two_months_ago = first_day_prev_month - timedelta(days=1)
+        first_day_two_months_ago = last_day_two_months_ago.replace(day=1)
+
+        start_dt = datetime(first_day_two_months_ago.year, first_day_two_months_ago.month, 1, 0, tzinfo=timezone.utc)
+        end_dt = datetime(last_day_prev_month.year, last_day_prev_month.month, last_day_prev_month.day, 23, tzinfo=timezone.utc)
+
+    elif mode == "custom":
+        if not custom_start or not custom_end:
+            raise ValueError("Custom mode requires both --start and --end parameters (YYYY-MM-DDTHH).")
+        start_dt = datetime.strptime(custom_start, "%Y-%m-%dT%H").replace(tzinfo=timezone.utc)
+        end_dt = datetime.strptime(custom_end, "%Y-%m-%dT%H").replace(tzinfo=timezone.utc)
+
+    hours = []
+    curr = start_dt
+    while curr <= end_dt:
+        hours.append(curr.strftime("%Y-%m-%dT%H"))
+        curr += timedelta(hours=1)
+
+    return hours
+
 # --- Main Orchestration ---
 
-def extract_eia_endpoint(endpoint_config, target_hour):
-    """Orchestrates pagination, API fetching, and loading for a single endpoint."""
+def extract_eia_endpoint(endpoint_config, target_hours):
+    """Orchestrates pagination, API fetching, and loading with in-place progress updates."""
     run_id = str(uuid.uuid4())
     url = endpoint_config['url']
     target_table = endpoint_config['table']
+    total_hours = len(target_hours)
     
     print(f"\n--- Starting extraction for: {target_table} ---")
-    print(f"Run ID: {run_id} | Target Hour: {target_hour}")
+    print(f"Run ID: {run_id} | Total Target Hours to Process: {total_hours}")
     
     conn = get_snowflake_connection()
     cursor = conn.cursor()
     
-    offset = 0
-    has_more_data = True
-    
-    while has_more_data:
-        page_num = (offset // LENGTH) + 1
-        print(f"Fetching Page {page_num} (Offset: {offset})...")
+    for idx, hour in enumerate(target_hours, start=1):
+        offset = 0
+        has_more_data = True
         
-        # 1. Prepare Request
-        params = build_api_params(target_hour, offset, endpoint_config['sorts'])
-        request_timestamp = datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
-        
-        # 2. Fetch API Data
-        response = fetch_with_retries(url, params)
-        
-        # 3. Process Payload & Metadata
-        parsed = process_api_response(response)
-        
-        if parsed["status_code"] != 200:
-            print(f"Failed at Page {page_num}. Status: {parsed['status_code']}. Error: {parsed['status_msg']}")
-            has_more_data = False
-        elif parsed["record_count"] < LENGTH:
-            has_more_data = False
-        else:
-            offset += LENGTH
+        while has_more_data:
+            page_num = (offset // LENGTH) + 1
+            
+            params = build_api_params(hour, offset, endpoint_config['sorts'])
+            request_timestamp = datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
+            
+            response = fetch_with_retries(url, params)
+            parsed = process_api_response(response)
+            
+            if parsed["status_code"] != 200:
+                print(f"\n[{idx}/{total_hours} - {hour}] Failed Page {page_num}. Status: {parsed['status_code']}. Error: {parsed['status_msg']}")
+                has_more_data = False
+            elif parsed["record_count"] < LENGTH:
+                has_more_data = False
+            else:
+                offset += LENGTH
 
-        # 4. Consolidate Record Context for Database
-        record_data = {
-            "run_id": run_id,
-            "loaded_at": request_timestamp,
-            "api_target_hour": target_hour,
-            "page": page_num,
-            **parsed
-        }
-
-        # 5. Execute Database Upsert
-        try:
-            upsert_to_snowflake(cursor, target_table, record_data)
-            print(f"Successfully loaded Page {page_num} to {target_table}. Records: {parsed['record_count']}")
-        except Exception as e:
-            # 1. Capture comprehensive operational context
-            error_context = {
-                "target_table": target_table,
-                "run_id": record_data.get("run_id"),
+            record_data = {
+                "run_id": run_id,
+                "loaded_at": request_timestamp,
+                "api_target_hour": hour,
                 "page": page_num,
-                "api_target_hour": record_data.get("api_target_hour"),
-                "record_count": record_data.get("record_count"),
-                "payload_hash": record_data.get("payload_hash"),
-                "error_type": type(e).__name__,
-                "error_details": str(e)
+                **parsed
             }
-            
-            # 2. Print structured output (or send to Python logging)
-            print(f"\n❌ CRITICAL: Snowflake MERGE Failed!")
-            print(f"Table: {target_table} | Run ID: {error_context['run_id']}")
-            print(f"Context: Page {page_num} | Target Hour: {error_context['api_target_hour']} | Records: {error_context['record_count']}")
-            print(f"Error [{error_context['error_type']}]: {error_context['error_details']}\n")
-            
-            # 3. Raise or break depending on workflow strategy
-            raise
 
+            try:
+                upsert_to_snowflake(cursor, target_table, record_data)
+            except Exception as e:
+                print(f"\n❌ CRITICAL: Snowflake MERGE Failed!")
+                print(f"Table: {target_table} | Hour: {hour} | Page: {page_num} | Error: {e}\n")
+                cursor.close()
+                conn.close()
+                raise
+
+        # Rewrite progress message in-place on terminal line
+        print(f"\rProgress: {idx} of {total_hours} target hours complete for {target_table}", end="", flush=True)
+
+    print() # Print newline upon completing table extraction to protect output line
     cursor.close()
     conn.close()
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="EIA Data Ingestion Pipeline")
+    parser.add_argument("--mode", choices=["auto", "daily", "weekly", "monthly", "custom"], default="auto",
+                        help="Extraction window mode (default: auto)")
+    parser.add_argument("--start", type=str, help="Custom start hour: YYYY-MM-DDTHH")
+    parser.add_argument("--end", type=str, help="Custom end hour: YYYY-MM-DDTHH")
     
-    TARGET_HOUR_OVERRIDE = "2026-01-01T00"
+    args = parser.parse_args()
     
+    target_hours = calculate_target_hours(args.mode, args.start, args.end)
+    print(f"Target Range: {target_hours[0]} to {target_hours[-1]} ({len(target_hours)} total hours)")
+
     ENDPOINTS = [
         {
             "url": "https://api.eia.gov/v2/electricity/rto/region-data/data/",
@@ -246,6 +304,6 @@ if __name__ == "__main__":
     ]
 
     for endpoint in ENDPOINTS:
-        extract_eia_endpoint(endpoint, TARGET_HOUR_OVERRIDE)
+        extract_eia_endpoint(endpoint, target_hours)
         
     print("\nAll extractions completed successfully.")
