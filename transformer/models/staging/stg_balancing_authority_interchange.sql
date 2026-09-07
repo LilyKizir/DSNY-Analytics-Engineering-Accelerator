@@ -9,7 +9,7 @@ with source as (
             'd.value:toba::string'
         ]) }} as bai_id
         -- raw_json_str:request.command::string as request_command
-      d.value:period::string as period
+      ,d.value:period::string as period
       ,d.value:fromba::string as fromba_code
       ,d.value:"fromba-name"::string as fromba_name
       ,d.value:toba::string as toba_code

@@ -9,7 +9,7 @@ with source as (
             'd.value:parent::string'
         ]) }} as srd_id
         -- raw_json_str:request.command::string as request_command
-      d.value:period::string as period
+      ,d.value:period::string as period
       ,d.value:subba::string as sub_ba_code
       ,d.value:"subba-name"::string as sub_ba_name
       ,d.value:parent::string as ba_code

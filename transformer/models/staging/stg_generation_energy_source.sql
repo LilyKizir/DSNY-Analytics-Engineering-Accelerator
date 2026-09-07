@@ -9,7 +9,7 @@ with source as (
             'd.value:fueltype::string'
         ]) }} as ges_id
         -- raw_json_str:request.command::string as request_command
-      d.value:period::string as period
+      ,d.value:period::string as period
       ,d.value:respondent::string as ba_code
       ,d.value:"respondent-name"::string as ba_name
       ,d.value:fueltype::string as fuel_code
