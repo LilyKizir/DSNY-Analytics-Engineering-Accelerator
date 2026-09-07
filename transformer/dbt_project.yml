@@ -42,6 +42,3 @@ models:
     # Gold: fact/dim gets aggregated and joined for reporting here
       +materialized: table
       +schema: MART
-    example:
-      +materialized: view
-      +schema: DBT_EXAMPLE

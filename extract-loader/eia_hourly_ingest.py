@@ -111,7 +111,7 @@ def extract_eia_endpoint(endpoint_config, target_hour):
             print(f"Failed at page {page_num}. Status: {status_code}. Error: {error_msg}")
 
         payload_hash = hashlib.md5(raw_json_str.encode('utf-8')).hexdigest()
-        print(payload_hash)
+        print(f"Page {page_num} Payload Hash: {payload_hash}")
 
         response_time_str = request_timestamp.strftime('%Y-%m-%d %H:%M:%S')
         status_message = error_msg if error_msg else "OK"
@@ -121,16 +121,16 @@ def extract_eia_endpoint(endpoint_config, target_hour):
             USING (
                 SELECT 
                     %s::VARCHAR AS run_id,
-                    %s::TIMESTAMP_NTZ AS utc_response_timestamp,
+                    %s::TIMESTAMP_NTZ AS loaded_at,
                     %s::NUMBER AS status_code,
                     %s::VARCHAR AS status_msg,
-                    %s::VARCHAR AS utc_timestamp, 
+                    %s::VARCHAR AS api_target_hour, 
                     %s::NUMBER AS page,
                     %s::NUMBER AS record_count,
                     PARSE_JSON(%s) AS raw_json_str,
                     %s::VARCHAR AS payload_hash
             ) S
-            ON T.utc_timestamp = S.utc_timestamp AND T.page = S.page
+            ON T.api_target_hour = S.api_target_hour AND T.page = S.page
             
             WHEN MATCHED AND (T.payload_hash IS NULL OR T.payload_hash != S.payload_hash) THEN
                 UPDATE SET 
@@ -140,17 +140,16 @@ def extract_eia_endpoint(endpoint_config, target_hour):
                     T.record_count = S.record_count,
                     T.raw_json_str = S.raw_json_str,
                     T.payload_hash = S.payload_hash,
-                    T.last_alter_date = S.utc_response_timestamp
+                    T.updated_at = S.loaded_at
                     
             WHEN NOT MATCHED THEN
-                INSERT (run_id, utc_response_timestamp, status_code, status_msg, 
-                        utc_timestamp, page, record_count, raw_json_str, payload_hash, last_alter_date)
-                VALUES (S.run_id, S.utc_response_timestamp, S.status_code, S.status_msg, 
-                        S.utc_timestamp, S.page, S.record_count, S.raw_json_str, S.payload_hash, S.utc_response_timestamp); 
+                INSERT (run_id, loaded_at, status_code, status_msg, 
+                        api_target_hour, page, record_count, raw_json_str, payload_hash, updated_at)
+                VALUES (S.run_id, S.loaded_at, S.status_code, S.status_msg, 
+                        S.api_target_hour, S.page, S.record_count, S.raw_json_str, S.payload_hash, S.loaded_at); 
         """
         
         try:
-            # 4. Add payload_hash as the 9th parameter in the tuple
             cursor.execute(upsert_query, (
                   run_id
                 , response_time_str
