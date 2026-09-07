@@ -52,8 +52,9 @@ sources:
             tests:
               - not_null
               - dbt_utils.accepted_range:
-                  min_value: 0
-                  max_value: 5000
+                  arguments:
+                    min_value: 0
+                    max_value: 5000
           - name: raw_json_str
             description: >
               Snowflake VARIANT column containing the full EIA JSON response. 
