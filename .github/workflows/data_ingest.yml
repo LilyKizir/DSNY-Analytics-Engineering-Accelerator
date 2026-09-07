@@ -35,3 +35,13 @@ jobs:
           SNOWFLAKE_DATABASE: "TIL_DATA_ENGINEERING"
           SNOWFLAKE_SCHEMA: "AEA_LK_RAW"
         run: python extract-loader/test.py --mode auto
+
+      - name: Run dbt models and tests
+        working-directory: ./transformer
+        env:
+          SNOWFLAKE_ACCOUNT: ${{ secrets.SNOWFLAKE_ACCOUNT }}
+          SNOWFLAKE_USERNAME: ${{ secrets.SNOWFLAKE_USERNAME }}
+          SNOWFLAKE_PRIVATE_KEY: ${{ secrets.SNOWFLAKE_PRIVATE_KEY }}
+        run: |
+          dbt deps --profiles-dir .
+          dbt build --profiles-dir .
