@@ -33,4 +33,4 @@ jobs:
           SNOWFLAKE_WAREHOUSE: "DATASCHOOL_WH"
           SNOWFLAKE_DATABASE: "TIL_DATA_ENGINEERING"
           SNOWFLAKE_SCHEMA: "AEA_LK_RAW"
-        run: python extract-loader/eia_hourly_ingest.py --mode auto
+        run: python extract-loader/test.py --mode auto
