@@ -1,6 +1,6 @@
 version: 2
+
 sources:
-    #custom schema path alias for Jinja
   - name: eia_energy
     database: TIL_DATA_ENGINEERING
     schema: AEA_LK_RAW
@@ -17,15 +17,15 @@ sources:
         tests: &eia_table_tests
           - dbt_utils.unique_combination_of_columns:
               combination_of_columns:
-                - utc_timestamp
+                - api_target_hour
                 - page
         columns: &eia_el_columns
           - name: run_id
             description: "UUID generated during the Python script execution."
             tests:
               - not_null
-          - name: utc_response_timestamp
-            description: "The UTC timestamp of when the API request was executed."
+          - name: loaded_at
+            description: "The UTC timestamp when the API request was executed and ingested into Snowflake."
             tests:
               - not_null
           - name: status_code
@@ -35,11 +35,11 @@ sources:
               - accepted_values:
                   values: [200]
                   config:
-                      severity: warn
+                    severity: warn
           - name: status_msg
             description: "'OK' for successes, or the raw error message for failures."
-          - name: utc_timestamp
-            description: "The target operating hour the script requested (e.g., '2026-01-01T00')."
+          - name: api_target_hour
+            description: "The target operating hour requested from the API (e.g., '2026-01-01T00')."
             tests:
               - not_null
           - name: page
@@ -57,6 +57,14 @@ sources:
             description: >
               Snowflake VARIANT column containing the full EIA JSON response. 
               The actual data records are nested under `response.data`.
+            tests:
+              - not_null
+          - name: payload_hash
+            description: "MD5 hash generated from the sorted JSON payload, used for CDC deduplication."
+            tests:
+              - not_null
+          - name: updated_at
+            description: "The UTC timestamp tracking when this record was inserted or last modified."
             tests:
               - not_null
 
