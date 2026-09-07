@@ -11,7 +11,11 @@ models:
         tests:
           - unique
           - not_null
-      - name: period
+      - name: post_date
+        description: "The UTC timestamp of the operating date."
+        tests:
+          - not_null
+      - name: post_time
         description: "The UTC timestamp of the operating hour."
         tests:
           - not_null
@@ -44,7 +48,11 @@ models:
         tests:
           - unique
           - not_null
-      - name: period
+      - name: post_date
+        description: "The UTC timestamp of the operating date."
+        tests:
+          - not_null
+      - name: post_time
         description: "The UTC timestamp of the operating hour."
         tests:
           - not_null
@@ -77,7 +85,11 @@ models:
         tests:
           - unique
           - not_null
-      - name: period
+      - name: post_date
+        description: "The UTC timestamp of the operating date."
+        tests:
+          - not_null
+      - name: post_time
         description: "The UTC timestamp of the operating hour."
         tests:
           - not_null
@@ -109,7 +121,11 @@ models:
         tests:
           - unique
           - not_null
-      - name: period
+      - name: post_date
+        description: "The UTC timestamp of the operating date."
+        tests:
+          - not_null
+      - name: post_time
         description: "The UTC timestamp of the operating hour."
         tests:
           - not_null
