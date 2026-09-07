@@ -3,6 +3,11 @@ with source as (
   ),
   renamed as (
     select
+      {{ dbt_utils.generate_surrogate_key([
+            'd.value:period::string', 
+            'd.value:respondent::string', 
+            'd.value:fueltype::string'
+        ]) }} as ges_id
         -- raw_json_str:request.command::string as request_command
       d.value:period::string as period
       ,d.value:respondent::string as ba_code

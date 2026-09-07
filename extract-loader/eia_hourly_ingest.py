@@ -132,23 +132,21 @@ def extract_eia_endpoint(endpoint_config, target_hour):
             ) S
             ON T.utc_timestamp = S.utc_timestamp AND T.page = S.page
             
-            -- 2. Add the CDC check: only update if the hash changed
             WHEN MATCHED AND (T.payload_hash IS NULL OR T.payload_hash != S.payload_hash) THEN
                 UPDATE SET 
                     T.run_id = S.run_id,
-                    T.utc_response_timestamp = S.utc_response_timestamp,
                     T.status_code = S.status_code,
                     T.status_msg = S.status_msg,
                     T.record_count = S.record_count,
                     T.raw_json_str = S.raw_json_str,
-                    T.payload_hash = S.payload_hash
+                    T.payload_hash = S.payload_hash,
+                    T.last_alter_date = S.utc_response_timestamp
                     
-            -- 3. Ensure hash is inserted for brand new records
             WHEN NOT MATCHED THEN
                 INSERT (run_id, utc_response_timestamp, status_code, status_msg, 
-                        utc_timestamp, page, record_count, raw_json_str, payload_hash)
+                        utc_timestamp, page, record_count, raw_json_str, payload_hash, last_alter_date)
                 VALUES (S.run_id, S.utc_response_timestamp, S.status_code, S.status_msg, 
-                        S.utc_timestamp, S.page, S.record_count, S.raw_json_str, S.payload_hash);
+                        S.utc_timestamp, S.page, S.record_count, S.raw_json_str, S.payload_hash, S.utc_response_timestamp); 
         """
         
         try:
