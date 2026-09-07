@@ -16,9 +16,10 @@ sources:
           Updated hourly.
         tests: &eia_table_tests
           - dbt_utils.unique_combination_of_columns:
-              combination_of_columns:
-                - api_target_hour
-                - page
+              arguments:
+                combination_of_columns:
+                  - api_target_hour
+                  - page
         columns: &eia_el_columns
           - name: run_id
             description: "UUID generated during the Python script execution."
