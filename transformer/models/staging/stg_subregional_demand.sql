@@ -10,10 +10,10 @@ with source as (
         ]) }} as srd_id
         -- raw_json_str:request.command::string as request_command
       ,d.value:period::string as period
-      ,d.value:subba::string as sub_ba_code
-      ,d.value:"subba-name"::string as sub_ba_name
       ,d.value:parent::string as ba_code
       ,d.value:"parent-name"::string as ba_name
+      ,d.value:subba::string as sub_ba_code
+      ,d.value:"subba-name"::string as sub_ba_name
       ,d.value:value::numeric as value_mwh
       ,d.value:"value-units"::string as value_units
 
