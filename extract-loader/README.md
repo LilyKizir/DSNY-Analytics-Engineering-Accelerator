@@ -34,3 +34,37 @@ This Python pipeline orchestrates extraction from the EIA v2 Open API, applies c
 
 * **`extract_eia_endpoint(endpoint_config, target_hours)`**
   Orchestrates the lifecycle for a given EIA endpoint table: iterates over target hours, handles multi-page pagination offset loops, calls retries/parsing/upserts, and streams real-time CLI terminal progress.
+
+## Terminal Execution
+
+Ensure your virtual environment is active and `.env` credentials are set before running commands.
+
+1. Run Automated Execution (Default)
+Evaluates current date to run daily, weekly (Mondays), or monthly (1st of month) windows:
+```  
+$ python eia_hourly_ingest.py
+```
+
+2. Run Specific Preset Modes
+Force a specific lookback window regardless of current date:  
+```
+$ python eia_hourly_ingest.py --mode daily
+$ python eia_hourly_ingest.py --mode weekly
+$ python eia_hourly_ingest.py --mode monthly
+```
+
+3. Run Custom Date Backfill
+Extract specific windows using UTC format (YYYY-MM-DDTHH):  
+```
+$ python eia_hourly_ingest.py --mode custom --start 2026-01-01T00 --end 2026-01-07T23
+```
+
+Single-hour test run:  
+```
+$ python eia_hourly_ingest.py --mode custom --start 2026-03-15T12 --end 2026-03-15T12
+```
+
+4. View CLI Options & Documentation  
+```
+$ python eia_hourly_ingest.py --help
+```
