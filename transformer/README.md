@@ -1,106 +1,28 @@
 <h1>Tranformer</h1>
 <a id="readme-top"></a>
 
-This folder contains a dbt project that pulls raw data from snowflake and transforms it, through a series of models, into BI ready tables.
+This directory contains the dbt project responsible for transforming raw U.S. Energy Information Administration (EIA) grid data into a BI-ready analytics layer. 
 
-<h2>Directory Map</h2>
+The modeling strategy of this project separates structural data transformations from business logic.
 
-```Plaintext
-DSNY-Analytics-Engineering-Accelerator/
-├── [everything else]
-└── transformer/               <-- YOU ARE HERE
-    ├── models/
-    ├── macros/
-    ├── tests/
-    ├── dbt_project.yml
-    └── profiles.yml          
-```
+## Architecture & Layering Philosophy
 
-<h2>Key steps</h2>
+### 1. Raw Layer (Context)
+Data is ingested from the EIA API and loaded into Snowflake with the entire JSON payload stored as a single `VARIANT` column.  
+**Why?** This ELT approach protects our pipeline from failing if the upstream API schema changes or drifts. We capture the exact state of the source data here. We also collect some metadata about the circumstances around the API call itself.
 
-<details>
-<summary><strong style="font size 24px:";>Imports</strong></summary>
+### 2. Staging Layer (`models/staging/`)
+The first step in dbt. We use Snowflake's `LATERAL FLATTEN` to unpack the raw JSON `VARIANT` payloads into tabular rows and columns. In this layer, we:
+* Extract nested fields.
+* Cast and standardize data types (e.g., strings to dates/times/numerics).
+* Generate surrogate keys for downstream joins.
 
->
-As always we need to bring in any packages we're using. In this case:
-- `xxx` is used to ...
-- `datetime` is used to create a timestamp for ...
-- `xxx` is used for ...
+### 3. Intermediate Layer (`models/intermediate/`)
+Here, we reshape the staging data into a **Star Schema** following Kimball methodology. 
+* **Dimensions (`dim_*`)**: Conformed entities (e.g., Balancing Authorities, Fuel Types, Metric Types).
+* **Facts (`fact_*`)**: Clean event logs (e.g., hourly generation, sub-regional demand) stripped of descriptive text.
 
-```python
-from xxx import xxx
-from datetime import datetime
-import xx
-```
-</details>
-
-<details>
-<summary><strong style="font size 24px;";>Script Explaination</strong></summary>
-
->
-The script has two key functions:
-- xxx(): lorem ipsum
-- xxx(): lorem ipsum
-
-```python
-enter code here
-```
-</details>
-
-<h2>Project Setup</h2>
-
-Configuration considerations:
-
-<h3>1. Clone the repository</h3>
-
-```shell
-git clone https://github.com/xxx/xxx.git
-```
-
-<h3>2. Move into the new directory</h3>
-
-```shell
-cd project_name
-```
-
-<h3>3. Create a virtual environment (optional)</h3>
-
-```shell
-python -m venv .venv
-```
-
-This step isn't strictly necessary but is good practice for isolation and keeping projects lean in terms of packages and so on.
-
-<h3>4. Activate your virtual environment</h3>
-
-For Windows users:
-
-```shell
-.venv\scripts\activate
-```
-
-For Mac users:
-
-```shell
-source .venv/bin/activate
-```
-
-Again, this isn't strictly necessary i.e. if you're not using a venv as outlined in the step above.
-
-<h3>5. Install required packages</h3>
-
-```shell
-pip install -r requirements.txt
-```
-
-This will install project environment requirements.
-
-<h3>999. Run Project</h3>
-
-Instructions here
-
-```shell
-python main.py
-```
-
-This will run the script.
+### 4. Marts Layer / Gold (`models/marts/`)
+This is the presentation layer where data is modeled for end-users and BI dashboards. 
+* **Separation of Concerns:** By isolating business logic in the Marts layer, the core pipeline (Staging/Intermediate) remains purely focused on data structure and integrity.
+* **Calculations:** This is where we apply complex business rules, calculate KPIs (e.g., forecast accuracy, renewable penetration), pivot rows to columns, and aggregate time series data to the daily grain.
