@@ -1,14 +1,17 @@
+# =====================================================================
+# dbt Project Configuration: EIA Energy Analytics Engineering
+# =====================================================================
+# Transforms raw EIA API JSON payloads in Snowflake into a Kimball-style
+# star schema and BI-ready gold data marts.
 
-# Project Name
 name: 'transformer'
 version: '1.0.0'
+config-version: 2
 
-# This setting configures which "profile" dbt uses for this project.
+# Target connection profile defined in profiles.yml
 profile: 'transformer'
 
-# These configurations specify where dbt should look for different types of files.
-# The `model-paths` config, for example, states that models in this project can be
-# found in the "models/" directory. You probably won't need to change these!
+# Directory Pathing
 model-paths: ["models"]
 analysis-paths: ["analyses"]
 test-paths: ["tests"]
@@ -16,29 +19,39 @@ seed-paths: ["seeds"]
 macro-paths: ["macros"]
 snapshot-paths: ["snapshots"]
 
-clean-targets:         # directories to be removed by `dbt clean`
+# Directories removed on `dbt clean`
+clean-targets:
   - "target"
   - "dbt_packages"
 
-
-# Configuring models
-# Full documentation: https://docs.getdbt.com/docs/configuring-models
-
-# In this example config, we tell dbt to build all models in the example/
-# directory as views. These settings can be overridden in the individual model
-# files using the `{{ config(...) }}` macro.
+# =====================================================================
+# Model Materialization & Schema Layering
+# =====================================================================
 models:
   transformer:
-    # Config indicated by + and applies to all files under models/example/
+    # -----------------------------------------------------------------
+    # Layer 1: Staging (Bronze)
+    # Flattens raw JSON VARIANT payloads, cleans column names, and casts
+    # basic data types without modifying source grain.
+    # -----------------------------------------------------------------
     staging:
-    # Bronze: raw json data becomes table here
       +materialized: view
       +schema: STAGE
+
+    # -----------------------------------------------------------------
+    # Layer 2: Intermediate (Silver)
+    # Reshapes staging data into normalized Kimball Star Schema entities 
+    # (fact_* and dim_*) to establish core data integrity.
+    # -----------------------------------------------------------------
     intermediate:
-    # Silver: stage table gets organized into fact/dim here
       +materialized: view
       +schema: INTERMEDIATE
-    mart:
-    # Gold: fact/dim gets aggregated and joined for reporting here
+
+    # -----------------------------------------------------------------
+    # Layer 3: Marts (Gold)
+    # Joins dimensions and facts to apply business logic, calculate KPIs,
+    # and aggregate metrics into performance-optimized reporting tables.
+    # -----------------------------------------------------------------
+    marts:
       +materialized: table
       +schema: MART
