@@ -59,11 +59,6 @@ Extract specific windows using UTC format (YYYY-MM-DDTHH):
 $ python eia_hourly_ingest.py --mode custom --start 2026-01-01T00 --end 2026-01-07T23
 ```
 
-Single-hour test run:  
-```
-$ python eia_hourly_ingest.py --mode custom --start 2026-03-15T12 --end 2026-03-15T12
-```
-
 4. View CLI Options & Documentation  
 ```
 $ python eia_hourly_ingest.py --help
