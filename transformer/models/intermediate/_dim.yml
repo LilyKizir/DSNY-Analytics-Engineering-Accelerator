@@ -1,0 +1,66 @@
+version: 2
+
+models:
+  - name: dim_balancing_authority
+    description: >
+      Conformed dimension table representing all unique Balancing Authorities 
+      harvested across all raw EIA endpoints.
+    columns:
+      - name: ba_code
+        description: "Primary key. Standardized short code identifying the Balancing Authority (e.g., 'TEX', 'CISO', 'PJM')."
+        tests:
+          - unique
+          - not_null
+
+      - name: ba_name
+        description: "Full descriptive name of the Balancing Authority."
+        tests:
+          - not_null
+
+  - name: dim_energy_source
+    description: >
+      Conformed dimension table containing distinct energy fuel sources and types 
+      extracted from generation metrics data.
+    columns:
+      - name: fuel_code
+        description: "Primary key. Standardized EIA fuel type code (e.g., 'NG', 'SUN', 'COL', 'NUC')."
+        tests:
+          - unique
+          - not_null
+
+      - name: fuel_name
+        description: "Full descriptive name of the fuel source (e.g., 'Natural Gas', 'Solar', 'Coal')."
+        tests:
+          - not_null
+  
+  - name: dim_sub_balancing_authority
+    description: >
+      Conformed dimension table representing distinct sub-balancing authorities 
+      (utility sub-zones) extracted from sub-regional demand metrics.
+    columns:
+      - name: sub_ba_code
+        description: "Primary key. Standardized short code identifying the sub-balancing authority or zone."
+        tests:
+          - unique
+          - not_null
+
+      - name: sub_ba_name
+        description: "Full descriptive name of the sub-balancing authority zone."
+        tests:
+          - not_null
+
+  - name: dim_type_codes
+    description: >
+      Conformed dimension table representing distinct regional operating metric 
+      types (e.g., Demand, Net Generation, Total Interchange, Demand Forecast).
+    columns:
+      - name: type_code
+        description: "Primary key. Standardized metric code (e.g., 'D', 'NG', 'TI', 'DF')."
+        tests:
+          - unique
+          - not_null
+
+      - name: type_name
+        description: "Full descriptive name of the operating metric."
+        tests:
+          - not_null

@@ -1,19 +1,142 @@
-# version: 2
-# sources:
-#     #custom schema path alias for Jinja
-#   - name: eia_energy
-#     database: TIL_DATA_ENGINEERING
-#     schema: AEA_LK_RAW
-#     tables:
-#     # table name must match as in snowflake
-#       - name: raw_regional_operating_metrics # name of table in dbt flowchart comes from [the_file_name].sql
-#         identifier: raw_regional_operating_metrics
+version: 2
 
-#       - name: raw_generation_energy_source # name of table in dbt flowchart comes from [the_file_name].sql
-#         identifier: raw_generation_energy_source
+models:
+  - name: fact_balancing_authority_interchange
+    description: >
+      Fact table for directional power flows between interconnected Balancing Authorities. 
+      Derived from `stg_balancing_authority_interchange` by stripping descriptive text 
+      attributes to establish a clean, normalized fact table.
+    columns:
+      - name: bai_id
+        description: "Primary key. Surrogate key carried over from stg_balancing_authority_interchange."
+        tests:
+          - unique
+          - not_null
 
-#       - name: raw_subregional_demand # name of table in dbt flowchart comes from [the_file_name].sql
-#         identifier: raw_subregional_demand
+      - name: post_date
+        description: "The operating date of the interchange flow."
+        tests:
+          - not_null
 
-#       - name: raw_balancing_authority_interchange # name of table in dbt flowchart comes from [the_file_name].sql
-#         identifier: raw_balancing_authority_interchange
+      - name: post_time
+        description: "The operating hour of the interchange flow."
+        tests:
+          - not_null
+
+      - name: fromba_code
+        description: "Foreign key referencing the exporting Balancing Authority."
+        tests:
+          - not_null
+
+      - name: toba_code
+        description: "Foreign key referencing the importing Balancing Authority."
+        tests:
+          - not_null
+
+      - name: value_mwh
+        description: "Volume of electricity transferred in Megawatt-hours (MWh)."
+  
+  - name: fact_generation_energy_source
+    description: >
+      Fact table for net electricity generation by energy fuel source. 
+      Derived from `stg_generation_energy_source` by removing descriptive attributes 
+      to produce a normalized fact dataset.
+    columns:
+      - name: ges_id
+        description: "Primary key. Surrogate key carried over from stg_generation_energy_source."
+        tests:
+          - unique
+          - not_null
+
+      - name: post_date
+        description: "The operating date of the generation record."
+        tests:
+          - not_null
+
+      - name: post_time
+        description: "The operating hour of the generation record."
+        tests:
+          - not_null
+
+      - name: ba_code
+        description: "Foreign key referencing the Balancing Authority."
+        tests:
+          - not_null
+
+      - name: fuel_code
+        description: "Foreign key referencing the energy fuel type."
+        tests:
+          - not_null
+
+      - name: value_mwh
+        description: "Net generation volume in Megawatt-hours (MWh)."
+
+  - name: fact_regional_operating_metrics
+    description: >
+      Fact table for grid regional operating metrics (e.g., Demand, Net Generation, 
+      Total Interchange, Demand Forecast). Derived from `stg_regional_operating_metrics` 
+      by stripping descriptive attributes to produce a normalized fact dataset.
+    columns:
+      - name: rom_id
+        description: "Primary key. Surrogate key carried over from stg_regional_operating_metrics."
+        tests:
+          - unique
+          - not_null
+
+      - name: post_date
+        description: "The operating date of the metric record."
+        tests:
+          - not_null
+
+      - name: post_time
+        description: "The operating hour of the metric record."
+        tests:
+          - not_null
+
+      - name: ba_code
+        description: "Foreign key referencing the Balancing Authority."
+        tests:
+          - not_null
+
+      - name: type_code
+        description: "Foreign key referencing the operating metric type (e.g., 'D', 'NG', 'TI', 'DF')."
+        tests:
+          - not_null
+
+      - name: value_mwh
+        description: "Operating metric volume in Megawatt-hours (MWh)."
+
+  - name: fact_subregional_demand
+    description: >
+      Fact table for sub-regional utility zone electricity demand. Derived 
+      from `stg_subregional_demand` by stripping descriptive text attributes 
+      to establish a normalized fact table.
+    columns:
+      - name: srd_id
+        description: "Primary key. Surrogate key carried over from stg_subregional_demand."
+        tests:
+          - unique
+          - not_null
+
+      - name: post_date
+        description: "The operating date of the sub-regional demand record."
+        tests:
+          - not_null
+
+      - name: post_time
+        description: "The operating hour of the sub-regional demand record."
+        tests:
+          - not_null
+
+      - name: ba_code
+        description: "Foreign key referencing the parent Balancing Authority."
+        tests:
+          - not_null
+
+      - name: sub_ba_code
+        description: "Foreign key referencing the granular sub-balancing authority or zone."
+        tests:
+          - not_null
+
+      - name: value_mwh
+        description: "Sub-regional electricity demand volume in Megawatt-hours (MWh)."
