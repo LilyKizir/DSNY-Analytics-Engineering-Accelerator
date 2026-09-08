@@ -52,6 +52,6 @@ models:
     # Joins dimensions and facts to apply business logic, calculate KPIs,
     # and aggregate metrics into performance-optimized reporting tables.
     # -----------------------------------------------------------------
-    marts:
+    mart:
       +materialized: table
       +schema: MART
