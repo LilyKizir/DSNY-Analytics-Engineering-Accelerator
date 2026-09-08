@@ -8,7 +8,6 @@ with source as (
             'd.value:respondent::string', 
             'd.value:type::string'
         ]) }} as rom_id
-        -- raw_json_str:request.command::string as request_command
       ,d.value:period::string as period
       ,d.value:respondent::string as ba_code
       ,d.value:"respondent-name"::string as ba_name
