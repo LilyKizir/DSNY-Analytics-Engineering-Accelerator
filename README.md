@@ -140,7 +140,7 @@ dbt build
 
 <h2>FUTURE IMPLEMENTATION</h2>  
 
-- Local Project Execution instructions
+- Local Project Execution instructions (.env secrets in this stage)
 - Clearer terminal messages for each step on the process from ingestion to transformation rather than default dbt messages
 - Consider turning keys into numeric value for smaller storage at scale
 - Create an error lines table to keep a copy of the errors from the raw table that are repaired
