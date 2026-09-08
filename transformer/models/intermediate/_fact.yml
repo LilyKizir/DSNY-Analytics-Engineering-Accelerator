@@ -27,15 +27,21 @@ models:
         description: "Foreign key referencing the exporting Balancing Authority."
         tests:
           - not_null
+          - relationships:
+              to: ref('dim_balancing_authority')
+              field: ba_code
 
       - name: toba_code
         description: "Foreign key referencing the importing Balancing Authority."
         tests:
           - not_null
+          - relationships:
+              to: ref('dim_balancing_authority')
+              field: ba_code
 
       - name: value_mwh
         description: "Volume of electricity transferred in Megawatt-hours (MWh)."
-  
+
   - name: fact_generation_energy_source
     description: >
       Fact table for net electricity generation by energy fuel source. 
@@ -62,11 +68,17 @@ models:
         description: "Foreign key referencing the Balancing Authority."
         tests:
           - not_null
+          - relationships:
+              to: ref('dim_balancing_authority')
+              field: ba_code
 
       - name: fuel_code
         description: "Foreign key referencing the energy fuel type."
         tests:
           - not_null
+          - relationships:
+              to: ref('dim_energy_source')
+              field: fuel_code
 
       - name: value_mwh
         description: "Net generation volume in Megawatt-hours (MWh)."
@@ -97,11 +109,17 @@ models:
         description: "Foreign key referencing the Balancing Authority."
         tests:
           - not_null
+          - relationships:
+              to: ref('dim_balancing_authority')
+              field: ba_code
 
       - name: type_code
         description: "Foreign key referencing the operating metric type (e.g., 'D', 'NG', 'TI', 'DF')."
         tests:
           - not_null
+          - relationships:
+              to: ref('dim_type_codes')
+              field: type_code
 
       - name: value_mwh
         description: "Operating metric volume in Megawatt-hours (MWh)."
@@ -132,11 +150,17 @@ models:
         description: "Foreign key referencing the parent Balancing Authority."
         tests:
           - not_null
+          - relationships:
+              to: ref('dim_balancing_authority')
+              field: ba_code
 
       - name: sub_ba_code
         description: "Foreign key referencing the granular sub-balancing authority or zone."
         tests:
           - not_null
+          - relationships:
+              to: ref('dim_sub_balancing_authority')
+              field: sub_ba_code
 
       - name: value_mwh
         description: "Sub-regional electricity demand volume in Megawatt-hours (MWh)."
