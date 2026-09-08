@@ -27,7 +27,7 @@ This is the presentation layer where data is modeled for end-users and BI dashbo
 * **Separation of Concerns:** By isolating business logic in the Marts layer, the core pipeline (Staging/Intermediate) remains purely focused on data structure and integrity.
 * **Calculations:** This is where we apply complex business rules, calculate KPIs (e.g., forecast accuracy, renewable penetration), pivot rows to columns, and aggregate time series data to the daily grain.
 
-## Run Project
+## Terminal Execution
 
 You can run the project in terminal using the following commands:
 
