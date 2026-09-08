@@ -138,7 +138,13 @@ dbt build
 
 - Click Run workflow to execute the Python ingestion script and dbt build sequence end-to-end.
 
-FUTURE IMPLEMENTATION - Local Project Execution
+<h2>FUTURE IMPLEMENTATION</h2>  
+
+- Local Project Execution instructions
+- Clearer terminal messages for each step on the process from ingestion to transformation rather than default dbt messages
+- consider turning keys into numeric value for smaller storage at scale
+- create an error lines table to keep a copy of the errors from the raw table that are repaired
+- manage scheduling entirely in snowflake rather than 3rd party tools
 
 
 <hr>
