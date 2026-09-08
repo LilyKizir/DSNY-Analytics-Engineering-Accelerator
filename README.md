@@ -3,110 +3,141 @@
 
 Produced by Lily Kiziriya
 
-The Analytics Engineering Project is...
+The Analytics Engineering Project is an end-to-end, automated data pipeline that:  
+- ingests U.S. Energy Information Administration (EIA) hourly electricity grid data into Snowflake
+- transforms the raw data into a clean, flattened bronze layer using dbt
+- models it into a silver layer dimensional star schema using dbt
+- produces BI ready tables that incorporate some basic business metrics in the gold layer
+- automates continuous execution via GitHub Actions + Cron-Job.org.
+
+<h2>Architecture & Pipeline Overview</h2>  
+
+```Plaintext
+┌────────────────────────────────────────────────────────────────────────────────────────────┐
+│  This project covers:                                                                      │
+│                                                                                            │
+│  ┌──────────────────┐      ┌─────────────────────────┐      ┌───────────────────────────┐  │      ┌─────────────────┐
+│  │  EIA Open API    │ ───> │ Python Ingestion Script │ ───> │ dbt Transformation        │  │ ───> │  BI Dashboard / │
+│  │  (Hourly Data)   │      │ Snowflake (Raw Storage) │      │ [Staging -> Int -> Marts] │  │      │    Analytics    │
+│  └──────────────────┘      └─────────────────────────┘      └───────────────────────────┘  │      └─────────────────┘
+└────────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+The pipeline operates in three distinct phases:  
+
+<b>Extraction & Raw Load:</b>  
+A Python script extracts hourly grid metrics across 4 EIA API endpoints.
+
+<b>Transformation & Modeling:</b>  
+dbt models the raw JSON payloads into a dimensional star schema using the medallion architecture for separation.
+
+Bronze --> Staging
+Silver --> Intermediate
+Gold   --> Mart
+
+<b>Orchestration & CI/CD:</b>  
+Manual workflow triggers run inside GitHub Actions, with scheduled automation triggered via Cron-Job.org.
 
 <h2>Directory Map</h2>
 
 ```Plaintext
-DSNY-Analytics-Engineering-Accelerator/    <-- YOU ARE HERE
-├── .devcontainer/
-│   └── devcontainer.json      <-- Codespaces environment installation requirements
+DSNY-Analytics-Engineering-Accelerator/
 ├── .github/
-│   └── workflows/             <-- This contains the Github actions YAML
-├── .vscode/                   <-- This contains vscode settings for codespaces
-│   └── settings.json
-├── extract-loader/            <-- This contains the python ingestion scripts
-└── transformer/               <-- This contains the dbt project
+│   └── workflows/
+│       └── daily_snowflake_ingestion.yml  # GitHub Actions pipeline workflow
+│
+├── extract-loader/                        # Python EL Pipeline
+│   ├── README.md                          # API & ingestion script docs
+│   └── eia_hourly_ingest.py               # Main modular production script
+│
+├── transformer/                           # dbt Transformation Project
+│   ├── README.md                          # dbt project & model docs
+│   ├── dbt_project.yml                    # dbt project configurations
+│   ├── profiles.yml                       # Snowflake connection profile (env_var mapped)
+│   └── models/
+│       ├── staging/                       # Raw JSON extraction & initial cleaning
+│       ├── intermediate/                  # Fact & dimension entities (Star Schema, Kimball methodology)
+│       └── marts/                         # Dashboard-ready gold tables
+│
+├── .env.example                           # Template for local environment variables
+├── requirements.txt                       # Python dependencies
+└── README.md                              # Repository overview (You are here)
 ```
 
-<h2>Key steps</h2>
+<h2>Data Lineage & Modeling Strategy</h2>
 
-<details>
-<summary><strong style="font size 24px:";>Imports</strong></summary>
+The target database is **`TIL_DATA_ENGINEERING`**, segmented logically across four core schema layers:
 
->
-As always we need to bring in any packages we're using. In this case:
-- `xxx` is used to ...
-- `datetime` is used to create a timestamp for ...
-- `xxx` is used for ...
+| Layer | Snowflake Schema | Grain / Description | dbt Materialization |
+| :--- | :--- | :--- | :--- |
+| **Raw** | `AEA_LK_RAW` | 1 row per API response page per target hour (`api_target_hour` + `page`) | Table (Python Load) |
+| **Staging** | `AEA_LK_STAGE` | 1 row per record parsed from raw JSON payloads (`stg_*`) | View |
+| **Intermediate** | `AEA_LK_INTERMEDIATE` | Conformed Fact and Dimension entities (`dim_*`, `fact_*`) | View |
+| **Marts** | `AEA_LK_MART` | Aggregated, dashboard-ready analytical summaries (`mart_*`) | Table |
 
-```python
-from xxx import xxx
-from datetime import datetime
-import xx
-```
-</details>
+**Data Grain Justification**
+* **Raw Layer (`AEA_LK_RAW`):** Captures complete API payload responses (`VARIANT`) to preserve source auditability without losing raw metadata.
+* **Dimensions (`dim_*`):** Isolates distinct entities for Balancing Authorities (`dim_balancing_authority`), sub-regions(`dim_sub_balancing_authority`), energy source types (`dim_energy_source`), and metric types (`dim_type_code`).
+* **Facts (`fact_*`):** Standardizes time series data to **1 row per operating hour per entity** (e.g., fuel type, region, interchange pair).
+* **Marts (`mart_*`):** Roll up hourly generation, regional metrics, and interchange flows into daily and zonal summaries for BI reporting performance.
 
-<details>
-<summary><strong style="font size 24px;";>Script Explaination</strong></summary>
+<h2>Engineering Judgments & Design Decisions</h2>
 
->
-The script has two key functions:
-- xxx(): lorem ipsum
-- xxx(): lorem ipsum
+- Idempotency & Re-run Safety: Raw loads use a Snowflake MERGE statement comparing an MD5 payload_hash generated from the API json output. Re-running the pipeline for existing time windows updates modified records or skips duplicate payloads without creating duplicate rows.
 
-```python
-enter code here
-```
-</details>
+- Rate Limit Management: EIA caps API requests at 5 req/sec and 9,000 req/hr. The ingestion script enforces a minimum 0.45-second sleep interval between calls and handles HTTP 429/50x codes with exponential backoff retries.
 
-<h2>Project Setup</h2>
+- Secret Handling: Credentials are never committed. Secrets are injected via environment variables at runtime using python-dotenv locally and GitHub Secrets in CI/CD.
 
-Configuration considerations:
+<h2>Setup & Local Execution Guide</h2>
 
-<h3>1. Clone the repository</h3>
+This project is optimized for quick deployment using repository cloning, GitHub Actions, and GitHub Codespaces.
 
-```shell
-git clone https://github.com/xxx/xxx.git
-```
+<h3>1. Fork the repository</h3>
 
-<h3>2. Move into the new directory</h3>
+<h3>2. Configure GitHub Secrets</h3>
 
-```shell
-cd project_name
-```
+Navigate to Settings > Secrets and variables > Actions in your GitHub repository and add the following repository secrets:
 
-<h3>3. Create a virtual environment (optional)</h3>
+- EIA_API_KEY
 
-```shell
-python -m venv .venv
-```
+- SNOWFLAKE_USERNAME
 
-This step isn't strictly necessary but is good practice for isolation and keeping projects lean in terms of packages and so on.
+- SNOWFLAKE_PAT
 
-<h3>4. Activate your virtual environment</h3>
+- SNOWFLAKE_PRIVATE_KEY (You will have to generate this rsa key pair. Private key for github, public key for snowflake)
 
-For Windows users:
+- SNOWFLAKE_ACCOUNT
 
-```shell
-.venv\scripts\activate
-```
 
-For Mac users:
+<h3>3. Launch in GitHub Codespaces</h3>
 
-```shell
-source .venv/bin/activate
+- Click Code > Codespaces > Create codespace on main.
+
+- The container automatically configures Python 3.12, dbt, and project dependencies defined in .devcontainer/devcontainer.json.
+
+- You can run the project in terminal using the following commands
+
+```Bash
+# Run raw EIA data extraction and Snowflake load
+python extract-loader/eia_hourly_ingest.py --mode auto
+
+# Run dbt transformations and tests
+cd transformer
+dbt deps 
+dbt build 
 ```
 
-Again, this isn't strictly necessary i.e. if you're not using a venv as outlined in the step above.
+<h3>4. Trigger the GitHub Actions Workflow</h3>  
 
-<h3>5. Install required packages</h3>
+- Go to the Actions tab in your GitHub repository.
 
-```shell
-pip install -r requirements.txt
-```
+- Select Daily Snowflake Ingestion.
 
-This will install project environment requirements.
+- Click Run workflow to execute the Python ingestion script and dbt build sequence end-to-end.
 
-<h3>999. Run Project</h3>
+FUTURE IMPLEMENTATION - Local Project Execution
 
-Instructions here
-
-```shell
-python main.py
-```
-
-This will run the script.
 
 <hr>
 
