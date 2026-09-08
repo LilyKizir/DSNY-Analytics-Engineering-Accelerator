@@ -1,0 +1,240 @@
+version: 2
+
+models:
+  - name: mart_demand_forecast_accuracy
+    description: >
+      Gold layer mart evaluating hourly electricity demand forecast accuracy and grid stress. 
+      Pivots actual demand ('D') against day-ahead forecasts ('DF') to compute error margins, 
+      Absolute Percentage Error (APE), forecast bias categorization, and high ramp risk flags.
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - operating_date
+              - operating_hour
+              - ba_code
+    columns:
+      - name: operating_date
+        description: "The operating date of the forecast assessment."
+        tests:
+          - not_null
+
+      - name: operating_hour
+        description: "The operating hour of the forecast assessment."
+        tests:
+          - not_null
+
+      - name: ba_code
+        description: "Short identifier for the Balancing Authority."
+        tests:
+          - not_null
+
+      - name: ba_name
+        description: "Full descriptive name of the Balancing Authority."
+
+      - name: actual_demand_mw
+        description: "Actual hourly electricity demand in Megawatts (MW)."
+
+      - name: forecasted_demand_mw
+        description: "Day-ahead forecasted electricity demand in Megawatts (MW)."
+
+      - name: net_generation_mw
+        description: "Net electricity generation in Megawatts (MW)."
+
+      - name: total_interchange_mw
+        description: "Total net interchange transfer in Megawatts (MW)."
+
+      - name: forecast_error_mw
+        description: "Signed forecast error (Actual Demand - Forecasted Demand) in MW."
+
+      - name: abs_forecast_error_mw
+        description: "Absolute magnitude of forecast error in MW."
+
+      - name: ape_pct
+        description: "Absolute Percentage Error calculated as (|Actual - Forecast| / Actual) * 100."
+
+      - name: forecast_bias_status
+        description: "Classification of forecast accuracy: 'UNDER FORECAST', 'OVER FORECAST', 'EXACT', or 'MISSING DATA'."
+        tests:
+          - accepted_values:
+              values: ['UNDER FORECAST', 'OVER FORECAST', 'EXACT', 'MISSING DATA']
+
+      - name: is_high_ramp_risk
+        description: "Binary flag (1/0) triggering when demand is under-forecast by > 5%, indicating sudden ramping stress."
+        tests:
+          - accepted_values:
+              values: [0, 1]
+
+
+  - name: mart_fuel_mix_daily
+    description: >
+      Gold layer mart summarizing daily electricity generation broken down by major 
+      fuel types and energy categories (Renewable, Nuclear, Thermal). Calculates 
+      key sustainability KPIs including renewable penetration and carbon-free share percentages.
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - generation_date
+              - ba_code
+    columns:
+      - name: generation_date
+        description: "Operating date of daily generation summaries."
+        tests:
+          - not_null
+
+      - name: ba_code
+        description: "Short identifier for the Balancing Authority."
+        tests:
+          - not_null
+
+      - name: ba_name
+        description: "Full descriptive name of the Balancing Authority."
+
+      - name: total_generation_mwh
+        description: "Total daily electricity generated across all fuel types in MWh."
+
+      - name: renewable_mwh
+        description: "Total daily generation from renewable sources (Solar, Wind, Hydro, Geothermal, Biomass) in MWh."
+
+      - name: carbon_free_mwh
+        description: "Total daily generation from carbon-free sources (Renewables + Nuclear) in MWh."
+
+      - name: thermal_mwh
+        description: "Total daily generation from fossil fuel sources (Coal, Natural Gas, Petroleum) in MWh."
+
+      - name: coal_mwh
+        description: "Daily generation from Coal in MWh."
+
+      - name: natural_gas_mwh
+        description: "Daily generation from Natural Gas in MWh."
+
+      - name: nuclear_mwh
+        description: "Daily generation from Nuclear power in MWh."
+
+      - name: petroleum_mwh
+        description: "Daily generation from Petroleum/Oil in MWh."
+
+      - name: solar_mwh
+        description: "Daily generation from Solar in MWh."
+
+      - name: wind_mwh
+        description: "Daily generation from Wind in MWh."
+
+      - name: hydro_mwh
+        description: "Daily generation from Hydroelectric power in MWh."
+
+      - name: other_mwh
+        description: "Daily generation from battery storage or unclassified sources in MWh."
+
+      - name: renewable_penetration_pct
+        description: "Percentage of total daily generation supplied by renewable sources."
+
+      - name: carbon_free_share_pct
+        description: "Percentage of total daily generation supplied by carbon-free sources."
+
+      - name: thermal_share_pct
+        description: "Percentage of total daily generation supplied by thermal/fossil sources."
+
+
+  - name: mart_grid_interchange_summary
+    description: >
+      Gold layer mart summarizing daily physical electricity trade and transfers 
+      between interconnected Balancing Authorities. Identifies trade positions (Net Exporter vs. Net Importer) 
+      and computes a normalized Net Trade Index bounded between -1.00 and +1.00.
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - trade_date
+              - ba_code
+    columns:
+      - name: trade_date
+        description: "Operating date of grid interchange trade."
+        tests:
+          - not_null
+
+      - name: ba_code
+        description: "Short identifier for the Balancing Authority."
+        tests:
+          - not_null
+
+      - name: ba_name
+        description: "Full descriptive name of the Balancing Authority."
+
+      - name: total_exports_mwh
+        description: "Total volume of electricity exported to adjacent balancing regions in MWh."
+
+      - name: total_imports_mwh
+        description: "Total volume of electricity imported from adjacent balancing regions in MWh."
+
+      - name: net_interchange_mwh
+        description: "Net electricity trade volume (Exports - Imports) in MWh. Positive values indicate net outflow."
+
+      - name: total_trade_volume_mwh
+        description: "Gross physical trade volume (Exports + Imports) in MWh."
+
+      - name: trade_position_status
+        description: "Categorization of daily trade stance: 'NET EXPORTER', 'NET IMPORTER', or 'BALANCED'."
+        tests:
+          - accepted_values:
+              values: ['NET EXPORTER', 'NET IMPORTER', 'BALANCED']
+
+      - name: net_trade_index
+        description: "Normalized index bounded between -1.00 (pure importer) and +1.00 (pure exporter)."
+        tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: -1.00
+                max_value: 1.00
+
+
+  - name: mart_subregional_load_profiles
+    description: >
+      Gold layer mart analyzing sub-regional utility demand patterns. Computes daily total demand, 
+      peak load, average load, load factor stability metrics, and sub-zone share relative to parent BA demand.
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - operating_date
+              - sub_ba_code
+    columns:
+      - name: operating_date
+        description: "Operating date of sub-regional demand metrics."
+        tests:
+          - not_null
+
+      - name: ba_code
+        description: "Short identifier for the parent Balancing Authority."
+        tests:
+          - not_null
+
+      - name: ba_name
+        description: "Full descriptive name of the parent Balancing Authority."
+
+      - name: sub_ba_code
+        description: "Short identifier for the sub-balancing authority / utility zone."
+        tests:
+          - not_null
+
+      - name: sub_ba_name
+        description: "Full descriptive name of the sub-balancing authority zone."
+
+      - name: total_sub_ba_demand_mwh
+        description: "Total daily sub-regional demand in MWh."
+
+      - name: peak_sub_ba_demand_mw
+        description: "Peak hourly sub-regional demand observed during the day in MW."
+
+      - name: avg_sub_ba_demand_mw
+        description: "Average hourly sub-regional demand across the day in MW."
+
+      - name: load_factor
+        description: "Ratio of average demand to peak demand (Avg / Peak). Bounded between 0.00 and 1.00, where values closer to 1.00 represent stable, flat load curves."
+
+      - name: total_parent_ba_demand_mwh
+        description: "Total daily demand reported by the parent Balancing Authority in MWh."
+
+      - name: sub_ba_demand_share_pct
+        description: "Percentage share of total parent Balancing Authority demand consumed by this sub-zone."
