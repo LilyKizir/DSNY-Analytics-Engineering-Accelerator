@@ -89,6 +89,8 @@ The target database is **`TIL_DATA_ENGINEERING`**, segmented logically across fo
 
 - Secret Handling: Credentials are never committed. Secrets are injected via environment variables at runtime using python-dotenv locally and GitHub Secrets in CI/CD.
 
+- Transformation Stages: Types of transformations are segregated based on their kind (ie. type casting, schema remodeling, business logic application)
+
 <h2>Setup & Local Execution Guide</h2>
 
 This project is optimized for quick deployment using repository cloning, GitHub Actions, and GitHub Codespaces.
